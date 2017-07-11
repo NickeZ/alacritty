@@ -262,6 +262,9 @@ pub trait Handler {
 
     /// Run the dectest routine
     fn dectest(&mut self) {}
+
+    /// DECSLRM
+    fn set_left_right_margin(&mut self, u32, u32) {}
 }
 
 /// Describes shape of cursor
@@ -314,6 +317,8 @@ pub enum Mode {
     LineFeedNewLine = 20,
     /// ?25
     ShowCursor = 25,
+    /// ?69
+    DECLRMM = 69,
     /// ?1000
     ReportMouseClicks = 1000,
     /// ?1002
@@ -341,6 +346,7 @@ impl Mode {
                 7 => Mode::LineWrap,
                 12 => Mode::BlinkingCursor,
                 25 => Mode::ShowCursor,
+                69 => Mode::DECLRMM,
                 1000 => Mode::ReportMouseClicks,
                 1002 => Mode::ReportMouseMotion,
                 1004 => Mode::ReportFocusInOut,
@@ -955,7 +961,7 @@ impl<'a, H, W> vte::Perform for Performer<'a, H, W>
 
                 handler.set_scrolling_region(top..bottom);
             },
-            's' => handler.save_cursor_position(),
+            's' => handler.set_left_right_margin(0, 0),
             'u' => handler.restore_cursor_position(),
             'q' => {
                 let style = match arg_or_default!(idx: 0, default: 0) {

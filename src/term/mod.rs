@@ -391,19 +391,20 @@ impl<'a> Iterator for RenderableCellsIter<'a> {
 pub mod mode {
     bitflags! {
         pub flags TermMode: u16 {
-            const SHOW_CURSOR         = 0b000000000001,
-            const APP_CURSOR          = 0b000000000010,
-            const APP_KEYPAD          = 0b000000000100,
-            const MOUSE_REPORT_CLICK  = 0b000000001000,
-            const BRACKETED_PASTE     = 0b000000010000,
-            const SGR_MOUSE           = 0b000000100000,
-            const MOUSE_MOTION        = 0b000001000000,
-            const LINE_WRAP           = 0b000010000000,
-            const LINE_FEED_NEW_LINE  = 0b000100000000,
-            const ORIGIN              = 0b001000000000,
-            const INSERT              = 0b010000000000,
-            const FOCUS_IN_OUT        = 0b100000000000,
-            const ANY                 = 0b111111111111,
+            const SHOW_CURSOR         = 0b0000000000001,
+            const APP_CURSOR          = 0b0000000000010,
+            const APP_KEYPAD          = 0b0000000000100,
+            const MOUSE_REPORT_CLICK  = 0b0000000001000,
+            const BRACKETED_PASTE     = 0b0000000010000,
+            const SGR_MOUSE           = 0b0000000100000,
+            const MOUSE_MOTION        = 0b0000001000000,
+            const LINE_WRAP           = 0b0000010000000,
+            const LINE_FEED_NEW_LINE  = 0b0000100000000,
+            const ORIGIN              = 0b0001000000000,
+            const INSERT              = 0b0010000000000,
+            const FOCUS_IN_OUT        = 0b0100000000000,
+            const LEFT_RIGHT_MARGIN   = 0b1000000000000,
+            const ANY                 = 0b1111111111111,
             const NONE                = 0,
         }
     }
@@ -1326,7 +1327,7 @@ impl ansi::Handler for Term {
 
     #[inline]
     fn device_status<W: io::Write>(&mut self, writer: &mut W, arg: usize) {
-        trace!("device status: {}", arg);
+        info!("device status: {}", arg);
         match arg {
             5 => {
                 let _ = writer.write_all(b"\x1b[0n");
@@ -1717,7 +1718,7 @@ impl ansi::Handler for Term {
 
     #[inline]
     fn set_mode(&mut self, mode: ansi::Mode) {
-        trace!("set_mode: {:?}", mode);
+        debug!("set_mode: {:?}", mode);
         match mode {
             ansi::Mode::SwapScreenAndSetRestoreCursor => {
                 self.save_cursor_position();
@@ -1736,15 +1737,16 @@ impl ansi::Handler for Term {
             ansi::Mode::Origin => self.mode.insert(mode::ORIGIN),
             ansi::Mode::DECCOLM => self.deccolm(),
             ansi::Mode::Insert => self.mode.insert(mode::INSERT), // heh
+            ansi::Mode::DECLRMM => self.mode.insert(mode::LEFT_RIGHT_MARGIN),
             _ => {
-                trace!(".. ignoring set_mode");
+                info!(".. ignoring set_mode");
             }
         }
     }
 
     #[inline]
     fn unset_mode(&mut self,mode: ansi::Mode) {
-        trace!("unset_mode: {:?}", mode);
+        debug!("unset_mode: {:?}", mode);
         match mode {
             ansi::Mode::SwapScreenAndSetRestoreCursor => {
                 self.restore_cursor_position();
@@ -1764,7 +1766,7 @@ impl ansi::Handler for Term {
             ansi::Mode::DECCOLM => self.deccolm(),
             ansi::Mode::Insert => self.mode.remove(mode::INSERT),
             _ => {
-                trace!(".. ignoring unset_mode");
+                info!(".. ignoring unset_mode");
             }
         }
     }
@@ -1805,6 +1807,11 @@ impl ansi::Handler for Term {
     fn set_cursor_style(&mut self, style: CursorStyle) {
         trace!("set_cursor_style {:?}", style);
         self.cursor_style = style;
+    }
+
+    #[inline]
+    fn set_left_right_margin(&mut self, pl:u32, pr:u32) {
+        println!("Got here");
     }
 }
 
